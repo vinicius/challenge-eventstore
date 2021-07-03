@@ -8,6 +8,7 @@ public class EventIteratorImpl implements EventIterator {
     private Iterator<Map.Entry<Long, Event>> iterator;
     private String type;
     private Map.Entry<Long, Event> current = null;
+    private boolean endReached = false;
 
     public EventIteratorImpl(Iterator<Map.Entry<Long, Event>> iterator, String type) {
         this.iterator = iterator;
@@ -24,16 +25,23 @@ public class EventIteratorImpl implements EventIterator {
                 return true;
             }
         }
+        endReached = true;
         return false;
     }
 
     @Override
     public Event current() {
-        return current != null ? current.getValue() : null;
+        if(current == null || endReached) {
+            throw new IllegalStateException();
+        }
+        return current.getValue();
     }
 
     @Override
     public void remove() {
+        if(current == null || endReached) {
+            throw new IllegalStateException();
+        }
         iterator.remove();
     }
 

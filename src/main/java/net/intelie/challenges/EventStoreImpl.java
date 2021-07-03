@@ -18,20 +18,18 @@ public class EventStoreImpl implements EventStore {
 
     @Override
     public void removeAll(String type) {
-
-
         for(Iterator<Map.Entry<Long, Event>> iterator = this.events.entrySet().iterator(); iterator.hasNext();) {
             Map.Entry<Long, Event> entry = iterator.next();
             if(entry.getValue().type().equals(type)) {
                 iterator.remove();
             }
         }
-        Set<Map.Entry<Long, Event>> eventsToRemove = this.events.entrySet();
-        eventsToRemove.removeIf(entry -> !entry.getValue().equals(type));
-        for(Iterator<Map.Entry<Long, Event>> iterator = eventsToRemove.iterator(); iterator.hasNext();) {
-            Map.Entry<Long, Event> entry = iterator.next();
-            iterator.remove();
-        }
+//        Set<Map.Entry<Long, Event>> eventsToRemove = this.events.entrySet();
+//        eventsToRemove.removeIf(entry -> !entry.getValue().equals(type));
+//        for(Iterator<Map.Entry<Long, Event>> iterator = eventsToRemove.iterator(); iterator.hasNext();) {
+//            Map.Entry<Long, Event> entry = iterator.next();
+//            iterator.remove();
+//        }
     }
 
     @Override
