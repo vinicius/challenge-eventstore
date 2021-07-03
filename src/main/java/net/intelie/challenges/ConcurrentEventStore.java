@@ -14,7 +14,7 @@ public class ConcurrentEventStore implements EventStore {
     /**
      * Map of events, keyed by their timestamp
      */
-    ConcurrentSkipListMap<Long, Event> events = new ConcurrentSkipListMap();
+    ConcurrentSkipListMap<Long, Event> events = new ConcurrentSkipListMap<>();
 
     @Override
     public void insert(Event event) {
@@ -39,6 +39,6 @@ public class ConcurrentEventStore implements EventStore {
 
     @Override
     public EventIterator query(String type, long startTime, long endTime) {
-        return new EventIteratorImpl(this.events.subMap(startTime, endTime).entrySet().stream().iterator(), type);
+        return new EventByTypeIterator(this.events.subMap(startTime, endTime).values().stream().iterator(), type);
     }
 }
