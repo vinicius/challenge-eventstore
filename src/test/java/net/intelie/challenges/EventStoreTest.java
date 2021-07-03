@@ -4,7 +4,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class EventTest {
+public class EventStoreTest {
+
     @Test
     public void testEventCreation() throws Exception {
         Event event = new Event("some_type", 123L);
@@ -15,7 +16,7 @@ public class EventTest {
     @Test
     public void testInsertAndQueryEvent() throws Exception {
         Event event = new Event("A", 360000L);
-        EventStore eventStore = new EventStoreImpl();
+        EventStore eventStore = new ConcurrentEventStore();
         eventStore.insert(event);
         EventIterator eventIterator = eventStore.query("A", event.timestamp(), event.timestamp() + 1);
         eventIterator.moveNext();
@@ -28,7 +29,7 @@ public class EventTest {
         Event event2 = new Event("A", 360003L);
         Event event3 = new Event("A", 340423L);
 
-        EventStore eventStore = new EventStoreImpl();
+        EventStore eventStore = new ConcurrentEventStore();
         eventStore.insert(event1);
         eventStore.insert(event2);
         eventStore.insert(event3);
@@ -64,7 +65,7 @@ public class EventTest {
         Event event2 = new Event("C", 360003L);
         Event event3 = new Event("A", 340423L);
 
-        EventStore eventStore = new EventStoreImpl();
+        EventStore eventStore = new ConcurrentEventStore();
         eventStore.insert(event1);
         eventStore.insert(event2);
         eventStore.insert(event3);
@@ -89,7 +90,7 @@ public class EventTest {
         Event event4 = new Event("A", 350423L);
         Event event5 = new Event("C", 40423L);
 
-        EventStore eventStore = new EventStoreImpl();
+        EventStore eventStore = new ConcurrentEventStore();
         eventStore.insert(event1);
         eventStore.insert(event2);
         eventStore.insert(event3);
@@ -121,7 +122,7 @@ public class EventTest {
         Event event4 = new Event("A", 350423L);
         Event event5 = new Event("C", 40423L);
 
-        EventStore eventStore = new EventStoreImpl();
+        EventStore eventStore = new ConcurrentEventStore();
         eventStore.insert(event1);
         eventStore.insert(event2);
         eventStore.insert(event3);
@@ -148,4 +149,34 @@ public class EventTest {
         eventIterator.moveNext();
         assertEquals(event2.timestamp(), eventIterator.current().timestamp());
     }
+
+    @Test
+    public void testEmptyStore() throws Exception {
+        EventStore emptyStore = new ConcurrentEventStore();
+        EventIterator eventIterator = emptyStore.query("any", 0L, 10000000L);
+        assertEquals(false, eventIterator.moveNext());
+        try {
+            eventIterator.current();
+            fail("Should have thrown IllegalStateException");
+        } catch (IllegalStateException ise) {
+            // expected behavior
+        }
+    }
+
+    @Test
+    public void testIteratorCurrentNullBeforeMove() throws Exception {
+        Event event1 = new Event("A", 360000L);
+
+        EventStore emptyStore = new ConcurrentEventStore();
+        emptyStore.insert(event1);
+
+        EventIterator eventIterator = emptyStore.query("any", 0L, 10000000L);
+        try {
+            eventIterator.current();
+            fail("Should have thrown IllegalStateException");
+        } catch (IllegalStateException ise) {
+            // expected behavior
+        }
+    }
+
 }

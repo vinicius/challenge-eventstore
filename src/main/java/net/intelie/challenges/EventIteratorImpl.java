@@ -3,6 +3,9 @@ package net.intelie.challenges;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * Iterator for {@link Event} collections
+ */
 public class EventIteratorImpl implements EventIterator {
 
     private Iterator<Map.Entry<Long, Event>> iterator;

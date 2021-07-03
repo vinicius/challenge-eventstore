@@ -1,14 +1,19 @@
 package net.intelie.challenges;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.stream.Collectors;
 
-public class EventStoreImpl implements EventStore {
 
+/**
+ * A concurrent event store implementation. It uses a thread safe ordered map for storing events.
+ * Concurrent operations on the event map can be performed but iterators are weakly consistent.
+ */
+public class ConcurrentEventStore implements EventStore {
+
+    /**
+     * Map of events, keyed by their timestamp
+     */
     ConcurrentSkipListMap<Long, Event> events = new ConcurrentSkipListMap();
 
     @Override
