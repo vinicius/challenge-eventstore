@@ -1,4 +1,7 @@
-package net.intelie.challenges;
+package net.intelie.challenges.eventstore;
+
+import net.intelie.challenges.eventstore.model.Event;
+import net.intelie.challenges.eventstore.interfaces.EventIterator;
 
 import java.util.Iterator;
 

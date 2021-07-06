@@ -1,4 +1,6 @@
-package net.intelie.challenges;
+package net.intelie.challenges.eventstore.interfaces;
+
+import net.intelie.challenges.eventstore.model.Event;
 
 /**
  * An iterator over an event collection.

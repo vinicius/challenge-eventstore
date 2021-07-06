@@ -1,20 +1,33 @@
-package net.intelie.challenges;
+package net.intelie.challenges.eventstore;
 
+import net.intelie.challenges.eventstore.model.Event;
+import net.intelie.challenges.eventstore.interfaces.EventIterator;
+import net.intelie.challenges.eventstore.interfaces.EventStore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class EventStoreTest {
+/**
+ * Tests for the event store map operations.
+ * Operations on the map are performed through an iterator (except inserts).
+ */
+public class EventStoreTests {
 
+    /**
+     * Tests the creation of a new event.
+     */
     @Test
-    public void testEventCreation() throws Exception {
+    public void testEventCreation() {
         Event event = new Event("some_type", 123L);
         assertEquals(123L, event.timestamp());
         assertEquals("some_type", event.type());
     }
 
+    /**
+     * Tests the insert of a new event by querying it on the event store.
+     */
     @Test
-    public void testInsertAndQueryEvent() throws Exception {
+    public void testInsertAndQueryEvent() {
         Event event = new Event("A", 360000L);
         EventStore eventStore = new ConcurrentEventStore();
         eventStore.insert(event);
@@ -23,8 +36,11 @@ public class EventStoreTest {
         assertEquals(event.timestamp(), eventIterator.current().timestamp());
     }
 
+    /**
+     * Insert multiple events and query the event map for them using different time ranges.
+     */
     @Test
-    public void testQueryEvents() throws Exception {
+    public void testQueryEvents() {
         Event event1 = new Event("A", 360000L);
         Event event2 = new Event("A", 360003L);
         Event event3 = new Event("A", 340423L);
@@ -35,32 +51,57 @@ public class EventStoreTest {
         eventStore.insert(event3);
 
         EventIterator eventIterator = eventStore.query("A", 0L, 400000L);
-        assertEquals(true, eventIterator.moveNext());
+        assertTrue(eventIterator.moveNext());
         assertEquals(event3.timestamp(), eventIterator.current().timestamp());
-        assertEquals(true, eventIterator.moveNext());
+        assertTrue(eventIterator.moveNext());
         assertEquals(event1.timestamp(), eventIterator.current().timestamp());
-        assertEquals(true, eventIterator.moveNext());
+        assertTrue(eventIterator.moveNext());
         assertEquals(event2.timestamp(), eventIterator.current().timestamp());
 
         eventIterator = eventStore.query("A", 350000L, 400000L);
-        assertEquals(true, eventIterator.moveNext());
+        assertTrue(eventIterator.moveNext());
         assertEquals(event1.timestamp(), eventIterator.current().timestamp());
-        assertEquals(true, eventIterator.moveNext());
+        assertTrue(eventIterator.moveNext());
         assertEquals(event2.timestamp(), eventIterator.current().timestamp());
 
         eventIterator = eventStore.query("A", 350000L, 360003L);
-        assertEquals(true, eventIterator.moveNext());
+        assertTrue(eventIterator.moveNext());
         assertEquals(event1.timestamp(), eventIterator.current().timestamp());
 
         eventIterator = eventStore.query("A", 340423L, 360003L);
-        assertEquals(true, eventIterator.moveNext());
+        assertTrue(eventIterator.moveNext());
         assertEquals(event3.timestamp(), eventIterator.current().timestamp());
-        assertEquals(true, eventIterator.moveNext());
+        assertTrue(eventIterator.moveNext());
         assertEquals(event1.timestamp(), eventIterator.current().timestamp());
     }
 
+    /**
+     * Testing event overriding when they have same timestamp.
+     * The last to be inserted overrides the previous one.
+     */
     @Test
-    public void testGetCurrentWithException() throws Exception {
+    public void testUnsupportedEventsSameTimestamp() {
+        Event event1 = new Event("A", 360000L);
+        Event event2 = new Event("B", 360000L);
+
+        EventStore eventStore = new ConcurrentEventStore();
+        eventStore.insert(event1);
+        eventStore.insert(event2);
+
+        EventIterator eventIterator = eventStore.query("A", 0L, 400000L);
+        assertFalse(eventIterator.moveNext());
+
+        eventIterator = eventStore.query("B", 0L, 400000L);
+        assertTrue(eventIterator.moveNext());
+        assertEquals(event1.timestamp(), eventIterator.current().timestamp());
+        assertFalse(eventIterator.moveNext());
+    }
+
+    /**
+     * Test the exception throw by the iterator when move next was false and current event is called.
+     */
+    @Test
+    public void testGetCurrentWithException() {
         Event event1 = new Event("A", 360000L);
         Event event2 = new Event("C", 360003L);
         Event event3 = new Event("A", 340423L);
@@ -71,7 +112,7 @@ public class EventStoreTest {
         eventStore.insert(event3);
 
         EventIterator eventIterator = eventStore.query("B", 340423L, 360003L);
-        assertEquals(false, eventIterator.moveNext());
+        assertFalse(eventIterator.moveNext());
         try {
             eventIterator.current();
             fail("Should have thrown IllegalStateException");
@@ -82,8 +123,11 @@ public class EventStoreTest {
         }
     }
 
+    /**
+     * Testing querying events by type.
+     */
     @Test
-    public void testQueryEventsByType() throws Exception {
+    public void testQueryEventsByType() {
         Event event1 = new Event("A", 360000L);
         Event event2 = new Event("B", 360003L);
         Event event3 = new Event("C", 340423L);
@@ -114,8 +158,11 @@ public class EventStoreTest {
         assertEquals(event3.timestamp(), eventIterator.current().timestamp());
     }
 
+    /**
+     * Test the removal of events from the event store by a given type
+     */
     @Test
-    public void testRemoveAllByType() throws Exception {
+    public void testRemoveAllByType() {
         Event event1 = new Event("A", 360000L);
         Event event2 = new Event("B", 360003L);
         Event event3 = new Event("C", 340423L);
@@ -131,7 +178,7 @@ public class EventStoreTest {
         eventStore.removeAll("A");
 
         EventIterator eventIterator = eventStore.query("A", 0L, 400000L);
-        assertEquals(false, eventIterator.moveNext());
+        assertFalse(eventIterator.moveNext());
         try {
             eventIterator.current();
             fail("Should have thrown IllegalStateException");
@@ -150,11 +197,14 @@ public class EventStoreTest {
         assertEquals(event2.timestamp(), eventIterator.current().timestamp());
     }
 
+    /**
+     * Test an empty store (and the exception thrown in case of current operation).
+     */
     @Test
-    public void testEmptyStore() throws Exception {
+    public void testEmptyStore() {
         EventStore emptyStore = new ConcurrentEventStore();
         EventIterator eventIterator = emptyStore.query("any", 0L, 10000000L);
-        assertEquals(false, eventIterator.moveNext());
+        assertFalse(eventIterator.moveNext());
         try {
             eventIterator.current();
             fail("Should have thrown IllegalStateException");
@@ -163,8 +213,11 @@ public class EventStoreTest {
         }
     }
 
+    /**
+     * Test if current operation is null before calling move next operation for the first time.
+     */
     @Test
-    public void testIteratorCurrentNullBeforeMove() throws Exception {
+    public void testIteratorCurrentNullBeforeMove() {
         Event event1 = new Event("A", 360000L);
 
         EventStore emptyStore = new ConcurrentEventStore();
